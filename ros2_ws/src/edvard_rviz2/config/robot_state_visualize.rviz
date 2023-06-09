@@ -1,0 +1,38 @@
+Panel Configurations: []
+Visualization Manager:
+  Class: ''
+  Displays:
+    - Alpha: 1
+      Cell Size: 1
+      Class: rviz_common/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Name: Grid
+      Offset: 0; 0; 0
+      Plane Cell Count: 10
+      Plane: XY
+      Show Axes: false
+      Show Grid: true
+    - Class: rviz_common/RobotModel
+      Description: ''
+      Enabled: true
+      Name: RobotModel
+      Robot Description: robot_description
+      Update Interval: 0
+      Visual Enabled: true
+      XRay: false
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: base_link
+    Frame Rate: 30
+    Help Path: ''
+  Name: ''
+  Tools:
+    - Class: rviz_common/Interact
+    - Class: rviz_common/MoveCamera
+    - Class: rviz_common/Select
+    - Class: rviz_common/FocusCamera
+    - Class: rviz_common/Measure
+    - Class: rviz_common/SetInitialPose
+    - Class: rviz_common/SetGoal
+  Version: 2

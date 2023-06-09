@@ -1,0 +1,9 @@
+singularity shell --fakeroot --unsquash --nv --bind /cluster/home/edvardbm/my_runtime_dir:/my_runtime_dir edvard6.sif
+export XDG_RUNTIME_DIR=/my_runtime_dir
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v "/opt/CoppeliaSim" | paste -sd: -)
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/CoppeliaSim_Edu_V4_1_0_Ubuntu20_04/
+export COPPELIASIM_ROOT=/root/CoppeliaSim_Edu_V4_1_0_Ubuntu20_04/ 
+export QT_QPA_PLATFORM_PLUGIN_PATH=/root/CoppeliaSim_Edu_V4_1_0_Ubuntu20_04/
+Xvfb :1201 -screen 0 1280x1024x24 &
+export DISPLAY=:1201.0   
+

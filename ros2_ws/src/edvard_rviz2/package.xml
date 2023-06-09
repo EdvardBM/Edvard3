@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>edvard_rviz2</name>
+  <version>0.1.0</version>
+  <description>Minimal description for kuka_lbr_iiwa_support</description>
+  <maintainer email="k@k.com">Eddi</maintainer>
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>edvard_interfaces</depend>
+
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_republisher</exec_depend>
+  <exec_depend>joint_state_republisher_to_robot.py</exec_depend>
+  <depend>rclcpp</depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type> 
+  </export>
+</package>

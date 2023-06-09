@@ -1,0 +1,49 @@
+Bootstrap: docker
+From: nvidia/cuda:11.1.1-cudnn8-devel-ubuntu20.04
+
+%environment
+
+%post
+    # export DEBIAN_FRONTEND to prevent interaction during apt-get installation.
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Set default time zone and keyboard layout for the container.
+    echo 'tzdata tzdata/Areas select Europe' | debconf-set-selections
+    echo 'tzdata tzdata/Zones/Europe select Oslo' | debconf-set-selections
+    echo 'keyboard-configuration keyboard-configuration/layoutcode string no' | debconf-set-selections
+
+    # Update apt-get and install required packages.
+    apt-get update -qq
+    apt-get install -y curl git libgl1-mesa-dev libgl1-mesa-glx libglew-dev \
+        libosmesa6-dev software-properties-common net-tools unzip vim virtualenv wget xpra xserver-xorg-dev libglfw3-dev patchelf \
+        xorg libxcb-randr0-dev libxrender-dev libxkbcommon-dev libxkbcommon-x11-0 libavcodec-dev libavformat-dev libswscale-dev \
+        xvfb python3 python3-pip libxi-dev
+
+    # Download and install VirtualGL.
+    wget --no-check-certificate https://sourceforge.net/projects/virtualgl/files/2.5.2/virtualgl_2.5.2_amd64.deb/download -O virtualgl_2.5.2_amd64.deb
+    dpkg -i virtualgl*.deb
+    rm virtualgl*.deb
+
+    # Download and install Miniconda.
+    wget --no-check-certificate https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p /opt/miniconda
+    rm miniconda.sh
+    
+    # Initialize Conda
+    . /opt/miniconda/etc/profile.d/conda.sh
+    conda init
+
+    # Install Python dependencies from requirements.txt file.
+    pip install -r /opt/requirements.txt
+
+    # Install some additional Python packages.
+    pip install numpy cffi==1.14.2 wandb matplotlib moviepy
+
+    # Install PyTorch and torchvision from the PyTorch channel.
+    conda install pytorch torchvision -c pytorch
+
+    # Clean up apt-get cache and unused packages to reduce image size.
+    apt-get autoclean -y && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+%files
+    /home/h/CoppeliaSim_Edu /root/CoppeliaSim_Container
+    /home/h/Edvard2/requirements.txt /opt/requirements.txt
