@@ -21,7 +21,7 @@ find_package(rclpy REQUIRED)
 find_package(sunrisedds_interfaces REQUIRED)
 
 install(PROGRAMS
-  scripts/joint_state_publisher.py
+  scripts/old_scripts/oint_state_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

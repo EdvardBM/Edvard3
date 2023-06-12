@@ -22,23 +22,23 @@ from pathlib import Path
 SCENE_FILE = join(dirname(abspath(__file__)), 
                   '../../scenes/Kuka_Reach_target_constraints.ttt')
 
-EPISODES = 1000
+EPISODES = 20000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 5
 LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = False 
-BASE_DIR = 'Reach_target_Recordings'
-RUN_NAME = 'Test_new_rewards'
+BASE_DIR = 'Reach_target_LR'
+RUN_NAME = '1r-3'
 LOAD_PREVIOUS_RUN = False
-CONTINUE_SAME_DIR = False   #Not added
 PREVIOUS_RUN_PATH = '/home/h/Edvard2/ros2_ws/src/Edvard_CoppeliaSim/scripts/Reach_target_Recordings/Fix_start_pause/best_episode/best_model.pth'
 
+WANDB_RUN_NAME = 'Reach_target_test'
 if USE_WANDB:
     import wandb
     wandb.login()
-    wandb.init(project=RUN_NAME,
+    wandb.init(project=WANDB_RUN_NAME,
                config={
                    "learning_rate": LR,
                    "episodes": EPISODES,
@@ -188,10 +188,10 @@ class ReachEnv(object):
     USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -10.0
     
-    USE_INSIDE_TARGET_REWARD = True
-    TARGET_THRESHOLD = 0.1  
-    INSIDE_TARGET_REWARD = 10.0
-    TIME_INSIDE_TARGET_REWARD_INCREMENT = 1.0 
+    USE_INSIDE_TARGET_REWARD = False
+    TARGET_THRESHOLD = 0.05  
+    INSIDE_TARGET_REWARD = 1.0
+    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.5 
 
     DONE_ON_REWARD_THRESHOLD = False
     REWARD_THRESHOLD = -0.001
@@ -286,22 +286,6 @@ class RunManager:
         self.best_episode_dir = None
         self.best_episodes = []
 
-    def prompt_for_overwrite(self, directory):
-        while True:
-            response = input(f'Directory {directory} already exists. Overwrite? (y/n): ')
-            if response.lower() in ['y', 'n']:
-                break
-            print("Invalid input. Please enter 'y' or 'n'.")
-        if response.lower() == 'y':
-            try:
-                shutil.rmtree(directory)
-                print(f"Directory {directory} removed.")
-                self.create_directories() 
-            except OSError as e:
-                print(f"Unable to remove directory {directory}. {e}")
-        else:
-            print(f"Directory {directory} not removed.")
-
     def create_directory(self, directory):
         try:
             os.makedirs(directory, exist_ok=True)
@@ -311,14 +295,24 @@ class RunManager:
     def create_directories(self):
         self.create_directory(self.base_dir)
         if self.run_dir.exists():
-            self.prompt_for_overwrite(self.run_dir)
-        else:
-            self.create_directory(self.run_dir)
+            self.run_name = self.create_unique_run_name()
+            self.run_dir = self.base_dir / self.run_name
+        self.create_directory(self.run_dir)
 
         subdirs = ['data']
         for subdir in subdirs:
             subdir_path = self.run_dir / subdir
             self.create_directory(subdir_path)
+
+    def create_unique_run_name(self):
+        # Increment run names until a new directory is found
+        i = 1
+        while True:
+            new_run_name = f"{self.run_name}_{i}"
+            if not (self.base_dir / new_run_name).exists():
+                return new_run_name
+            i += 1
+
 
     def update_best_episode(self, episode_reward, e, episode_dir, agent):
         if episode_reward > self.best_reward:
@@ -368,6 +362,8 @@ for e in range(EPISODES):
     masks = []
     actions_history = [] 
     action_log_probs = []
+    total_distance = 0
+    last_distance = 0
     states_history.append(state) 
     episode_dir = os.path.join(run_manager.run_dir, f'Episode_{e}')
     os.makedirs(episode_dir, exist_ok=True)
@@ -384,13 +380,22 @@ for e in range(EPISODES):
         state = next_state
         image = next_image
         depth_images.append(image[:, :, 3])
-        actions_history.append(action) 
+        actions_history.append(action)
+        distance_to_target = np.linalg.norm(env.agent_ee_tip.get_position() - env.waypoint.get_position())
+        total_distance += distance_to_target
+        last_distance = distance_to_target
     action_log_probs = np.array(action_log_probs)
     agent.learn(states, actions, log_probs_old, rewards, masks, values, images)
     episode_reward = sum(rewards)
     average_reward = episode_reward / len(rewards)
+    average_distance = total_distance / EPISODE_LENGTH
     if USE_WANDB:
-        wandb.log({"Episode Reward": episode_reward, "Average Reward": average_reward})
+        wandb.log({
+            "Episode Reward": episode_reward, 
+            "Average Reward": average_reward,
+            "Average Distance": average_distance,
+            "Last Distance": last_distance
+        })
     np.save(os.path.join(episode_dir, 'states.npy'), states_history)
     np.save(os.path.join(episode_dir, 'actions.npy'), actions_history)
     np.save(os.path.join(episode_dir, 'images.npy'), images)
@@ -404,8 +409,8 @@ RUN_NAME = Path(RUN_NAME)
 BEST_EPISODE_DIR = Path(best_episode_dir)
 
 make_video_command = join(dirname(abspath(__file__)), 'commands', 'make_video.py')
-subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/images.npy'])
-subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/depth_images.npy'])
+subprocess.Popen([make_video_command, f'{BEST_EPISODE_DIR}/images.npy'])
+subprocess.Popen([make_video_command, f'{BEST_EPISODE_DIR}/depth_images.npy'])
 print('Done!')
 env.shutdown()
 
