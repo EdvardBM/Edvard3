@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define your workspace location
-ROS2_WS_PATH=~/Edvard2/ros2_ws
+ROS2_WS_PATH=~/Edvard3/ros2_ws
 
 # Navigate to your workspace
 cd $ROS2_WS_PATH
@@ -37,5 +37,5 @@ source install/setup.bash
 
 
 #Before running 
-#sudo chown -R $USER:$USER ~/Edvard2/ros2_ws
+#sudo chown -R $USER:$USER ~/Edvard3/ros2_ws
 #bash build_workspace.sh 

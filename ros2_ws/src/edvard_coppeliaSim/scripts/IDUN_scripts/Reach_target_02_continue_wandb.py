@@ -22,29 +22,37 @@ from pathlib import Path
 SCENE_FILE = join(dirname(abspath(__file__)), 
                   '../../scenes/Kuka_Reach_target_constraints.ttt')
 
-EPISODES = 10
+EPISODES = 20000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 5
 LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = False 
-BASE_DIR = 'Reach_target_Recordings'
-RUN_NAME = 'Test_new_wandb'
+BASE_DIR = 'Reach_target_LR'
+RUN_NAME = '1r-3'
 LOAD_PREVIOUS_RUN = False
-CONTINUE_SAME_DIR = False   #Not added
 PREVIOUS_RUN_PATH = '/home/h/Edvard2/ros2_ws/src/Edvard_CoppeliaSim/scripts/Reach_target_Recordings/Fix_start_pause/best_episode/best_model.pth'
 
-WANDB_RUN_NAME = 'Reach_target_test'
+WANDB_CONTINUE = True
+WANDB_PROJECT_NAME = 'Test_continue_wandb'
+RUN_ID_TO_CONTINUE = '0p5y015n'
+
 if USE_WANDB:
     import wandb
     wandb.login()
-    wandb.init(project=WANDB_RUN_NAME,
-               config={
-                   "learning_rate": LR,
-                   "episodes": EPISODES,
-                   "episode_length": EPISODE_LENGTH
-               })
+    if WANDB_CONTINUE:
+        wandb.init(id=RUN_ID_TO_CONTINUE,
+                   project=WANDB_PROJECT_NAME,
+                   resume="must")
+    else:
+        wandb.init(project=WANDB_PROJECT_NAME,
+                config={
+                    "learning_rate": LR,
+                    "episodes": EPISODES,
+                    "episode_length": EPISODE_LENGTH
+                })
+
 
 joint_dim = 7 * 2  
 waypoint_dim = 3
@@ -287,22 +295,6 @@ class RunManager:
         self.best_episode_dir = None
         self.best_episodes = []
 
-    def prompt_for_overwrite(self, directory):
-        while True:
-            response = input(f'Directory {directory} already exists. Overwrite? (y/n): ')
-            if response.lower() in ['y', 'n']:
-                break
-            print("Invalid input. Please enter 'y' or 'n'.")
-        if response.lower() == 'y':
-            try:
-                shutil.rmtree(directory)
-                print(f"Directory {directory} removed.")
-                self.create_directories() 
-            except OSError as e:
-                print(f"Unable to remove directory {directory}. {e}")
-        else:
-            print(f"Directory {directory} not removed.")
-
     def create_directory(self, directory):
         try:
             os.makedirs(directory, exist_ok=True)
@@ -312,14 +304,24 @@ class RunManager:
     def create_directories(self):
         self.create_directory(self.base_dir)
         if self.run_dir.exists():
-            self.prompt_for_overwrite(self.run_dir)
-        else:
-            self.create_directory(self.run_dir)
+            self.run_name = self.create_unique_run_name()
+            self.run_dir = self.base_dir / self.run_name
+        self.create_directory(self.run_dir)
 
         subdirs = ['data']
         for subdir in subdirs:
             subdir_path = self.run_dir / subdir
             self.create_directory(subdir_path)
+
+    def create_unique_run_name(self):
+        # Increment run names until a new directory is found
+        i = 1
+        while True:
+            new_run_name = f"{self.run_name}_{i}"
+            if not (self.base_dir / new_run_name).exists():
+                return new_run_name
+            i += 1
+
 
     def update_best_episode(self, episode_reward, e, episode_dir, agent):
         if episode_reward > self.best_reward:
@@ -332,7 +334,6 @@ class RunManager:
             if os.path.exists(self.best_episode_dir):
                 shutil.rmtree(self.best_episode_dir)
             shutil.copytree(episode_dir, self.best_episode_dir)
-            torch.save(agent.policy.state_dict(), os.path.join(self.best_episode_dir, 'best_model.pth'))
             self.best_episodes.append(e)
         return self.best_episode_dir
 
@@ -343,6 +344,11 @@ class RunManager:
             shutil.rmtree(episode_dirs[0], ignore_errors=True)
             episode_dirs.pop(0)
 
+script_info = f'Script: {__file__}\n'
+script_info += f'Script Path: {os.path.abspath(__file__)}\n'
+
+with open(os.path.join(run_manager.run_dir, 'script_info.txt'), 'w') as f:
+    f.write(script_info)
 
 env = ReachEnv()
 agent = Agent()
@@ -403,11 +409,14 @@ for e in range(EPISODES):
             "Average Distance": average_distance,
             "Last Distance": last_distance
         })
-    np.save(os.path.join(episode_dir, 'states.npy'), states_history)
-    np.save(os.path.join(episode_dir, 'actions.npy'), actions_history)
+    torch.save(agent.policy.state_dict(), os.path.join(episode_dir, 'model.pth'))
+    np.save(os.path.join(episode_dir, 'states.npy'), states)
+    np.save(os.path.join(episode_dir, 'actions.npy'), actions)
+    np.save(os.path.join(episode_dir, 'log_probs_old.npy'), log_probs_old)
+    np.save(os.path.join(episode_dir, 'values.npy'), values)
+    np.save(os.path.join(episode_dir, 'masks.npy'), masks)
     np.save(os.path.join(episode_dir, 'images.npy'), images)
-    np.save(os.path.join(episode_dir, 'depth_images.npy'), depth_images)
-    np.save(os.path.join(episode_dir, 'rewards.npy'), rewards)
+    shutil.copy(os.path.join(run_manager.run_dir, 'script_info.txt'), episode_dir)
     best_episode_dir = run_manager.update_best_episode(episode_reward, e, episode_dir, agent)
     run_manager.maintain_last_episodes_memory(e)
 
@@ -416,8 +425,8 @@ RUN_NAME = Path(RUN_NAME)
 BEST_EPISODE_DIR = Path(best_episode_dir)
 
 make_video_command = join(dirname(abspath(__file__)), 'commands', 'make_video.py')
-subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/images.npy'])
-subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/depth_images.npy'])
+subprocess.Popen([make_video_command, f'{BEST_EPISODE_DIR}/images.npy'])
+subprocess.Popen([make_video_command, f'{BEST_EPISODE_DIR}/depth_images.npy'])
 print('Done!')
 env.shutdown()
 

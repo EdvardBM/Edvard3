@@ -34,7 +34,7 @@ RUN_NAME = '1r-3'
 LOAD_PREVIOUS_RUN = False
 PREVIOUS_RUN_PATH = '/home/h/Edvard2/ros2_ws/src/Edvard_CoppeliaSim/scripts/Reach_target_Recordings/Fix_start_pause/best_episode/best_model.pth'
 
-WANDB_RUN_NAME = 'Reach_target_test'
+WANDB_RUN_NAME = 'Reach_target_LR'
 if USE_WANDB:
     import wandb
     wandb.login()

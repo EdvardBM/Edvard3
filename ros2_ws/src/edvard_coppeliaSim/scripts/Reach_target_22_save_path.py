@@ -1,15 +1,3 @@
-'''
-Cleanup
-To do:
-Add Continue in same dir
-Import fom wandb
-Maybe look into efficiency between episodes
-Add falgs for depth and RGB
-Test if HEADLESS=True if --writable
-Maybe Implement SB3 or other library
-'''
-
-
 #!/usr/bin/env python3
 
 from os.path import dirname, join, abspath
@@ -34,39 +22,22 @@ from pathlib import Path
 SCENE_FILE = join(dirname(abspath(__file__)), 
                   '../../scenes/Kuka_Reach_target_constraints.ttt')
 
-EPISODES = 10
+EPISODES = 100
 EPISODE_LENGTH = 200
-LAST_EPISODES_MEMORY = 5
+LAST_EPISODES_MEMORY = 2
+SAVE_EVERY_X_EPISODE = 25
 LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = True 
-BASE_DIR = 'Reach_target_Recordings'
-RUN_NAME = 'Test_new_wandb'
-LOAD_PREVIOUS_RUN = False
-PREVIOUS_RUN_PATH = '/home/h/Edvard2/ros2_ws/src/Edvard_CoppeliaSim/scripts/Reach_target_Recordings/Fix_start_pause/best_episode/best_model.pth'
+BASE_DIR = 'Test_22_save_path'
+RUN_NAME = 'Test_05'
+LOAD_PREVIOUS_RUN = True
+PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_05/Episode_9/model.pth"
 
-
-#/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/wandb/run-20230614_125425-0p5y015n
-WANDB_CONTINUE = True
-WANDB_PROJECT_NAME = 'Test_continue_wandb'
-RUN_ID_TO_CONTINUE = '0p5y015n'
-
-if USE_WANDB:
-    import wandb
-    wandb.login()
-    if WANDB_CONTINUE:
-        wandb.init(id=RUN_ID_TO_CONTINUE,
-                   project=WANDB_PROJECT_NAME,
-                   resume="must")
-    else:
-        wandb.init(project=WANDB_PROJECT_NAME,
-                config={
-                    "learning_rate": LR,
-                    "episodes": EPISODES,
-                    "episode_length": EPISODE_LENGTH
-                })
-
+WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
+WANDB_PROJECT_NAME = 'Test_resume_2'
+run = None
 
 joint_dim = 7 * 2  
 waypoint_dim = 3
@@ -208,7 +179,7 @@ class ReachEnv(object):
         'joint7': tuple(np.radians([-175.0, 175.0])),
     }
     
-    USE_LIMIT_PENALTY = True
+    USE_LIMIT_PENALTY = False
     LIMIT_PENALTY = -10.0
     
     USE_INSIDE_TARGET_REWARD = False
@@ -263,14 +234,6 @@ class Agent(object):
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
         self.ppo = PPO(self.policy, self.optimizer)
 
-    def load_model(self, model_path):
-        try:
-            self.policy.load_state_dict(torch.load(model_path))
-            print(f"Successfully loaded model from {model_path}")
-        except Exception as e:
-            print(f"Failed to load model from {model_path}. Error: {e}")
-
-
     def act(self, state, image):
         state = torch.tensor(state, dtype=torch.float32)
         image = torch.tensor(image, dtype=torch.float32)
@@ -308,22 +271,7 @@ class RunManager:
         self.best_reward = -np.inf
         self.best_episode_dir = None
         self.best_episodes = []
-
-    def prompt_for_overwrite(self, directory):
-        while True:
-            response = input(f'Directory {directory} already exists. Overwrite? (y/n): ')
-            if response.lower() in ['y', 'n']:
-                break
-            print("Invalid input. Please enter 'y' or 'n'.")
-        if response.lower() == 'y':
-            try:
-                shutil.rmtree(directory)
-                print(f"Directory {directory} removed.")
-                self.create_directories() 
-            except OSError as e:
-                print(f"Unable to remove directory {directory}. {e}")
-        else:
-            print(f"Directory {directory} not removed.")
+        self.script_info_path = self.run_dir / 'script_info.txt'
 
     def create_directory(self, directory):
         try:
@@ -331,17 +279,20 @@ class RunManager:
         except OSError as e:
             print(f"Unable to create directory {directory}. {e}")
 
-    def create_directories(self):
+    def create_directories(self, load_previous_run):
         self.create_directory(self.base_dir)
-        if self.run_dir.exists():
-            self.prompt_for_overwrite(self.run_dir)
-        else:
-            self.create_directory(self.run_dir)
+        if not load_previous_run and self.run_dir.exists():
+            self.run_name = self.create_unique_run_name()
+            self.run_dir = self.base_dir / self.run_name
+        self.create_directory(self.run_dir)
 
-        subdirs = ['data']
-        for subdir in subdirs:
-            subdir_path = self.run_dir / subdir
-            self.create_directory(subdir_path)
+    def create_unique_run_name(self):
+        i = 1
+        while True:
+            new_run_name = f"{self.run_name}_{i}"
+            if not (self.base_dir / new_run_name).exists():
+                return new_run_name
+            i += 1
 
     def update_best_episode(self, episode_reward, e, episode_dir, agent):
         if episode_reward > self.best_reward:
@@ -354,31 +305,88 @@ class RunManager:
             if os.path.exists(self.best_episode_dir):
                 shutil.rmtree(self.best_episode_dir)
             shutil.copytree(episode_dir, self.best_episode_dir)
-            torch.save(agent.policy.state_dict(), os.path.join(self.best_episode_dir, 'best_model.pth'))
             self.best_episodes.append(e)
         return self.best_episode_dir
 
     def maintain_last_episodes_memory(self, episode):
-        episode_dirs = sorted(glob.glob(str(self.run_dir / 'Episode_*')), key=lambda x: int(x.split('_')[-1]))
-        while len(episode_dirs) > LAST_EPISODES_MEMORY:
-            print(f"Deleting directory: {episode_dirs[0]}") 
-            shutil.rmtree(episode_dirs[0], ignore_errors=True)
-            episode_dirs.pop(0)
+            episode_dirs = sorted(glob.glob(str(self.run_dir / 'Episode_*')), key=lambda x: int(x.split('_')[-1]))
+            while len(episode_dirs) > LAST_EPISODES_MEMORY:
+                if int(episode_dirs[0].split('_')[-1]) % SAVE_EVERY_X_EPISODE != 0:  # Skip the episodes that should be saved
+                    print(f"Deleting directory: {episode_dirs[0]}") 
+                    shutil.rmtree(episode_dirs[0], ignore_errors=True)
+                episode_dirs.pop(0)
 
+    def load_wandb_id(self):
+        if self.script_info_path.exists():
+            with open(self.script_info_path, 'r') as f:
+                for line in f:
+                    if 'Wandb ID' in line:
+                        return line.split(': ')[-1].strip()
+        return None
 
 env = ReachEnv()
 agent = Agent()
-if LOAD_PREVIOUS_RUN:
-    agent.load_model(PREVIOUS_RUN_PATH)
 run_manager = RunManager(base_dir=BASE_DIR, run_name=RUN_NAME)
-run_manager.create_directories() 
+run_manager.create_directories(load_previous_run=LOAD_PREVIOUS_RUN) 
 states_history = [] 
 best_reward = -np.inf
 best_episode_dir = None
 best_episodes = []
 best_episode = -1
 
-for e in range(EPISODES):
+if LOAD_PREVIOUS_RUN:
+    save_info = torch.load(PREVIOUS_RUN_PATH)
+    agent.policy.load_state_dict(save_info['model_state_dict'])  # Load the model state
+    agent.optimizer.load_state_dict(save_info['optimizer_state_dict'])  # Load the optimizer state
+    run_manager.best_reward = save_info['best_reward']
+    start_episode = save_info['episode'] + 1
+    best_episode_dir = os.path.dirname(PREVIOUS_RUN_PATH)
+
+    # Load other data as necessary
+    states = save_info['other_data']['states']
+    actions = save_info['other_data']['actions']
+    log_probs_old = save_info['other_data']['log_probs_old']
+    values = save_info['other_data']['values']
+    masks = save_info['other_data']['masks']
+    images = save_info['other_data']['images']
+    depth_images = save_info['other_data']['depth_images']
+else:
+    start_episode = 0
+    best_episode_dir = run_manager.run_dir / 'best_episode'
+    best_episode_dir.mkdir(parents=True, exist_ok=True)  # Create the directory
+
+
+script_info = f'Script: {__file__}\n'
+script_info += f'Script Path: {os.path.abspath(__file__)}\n'
+
+if USE_WANDB:
+    import wandb
+    wandb.login()
+
+    if WANDB_CONTINUE:
+        wandb_id = run_manager.load_wandb_id()
+
+    if WANDB_CONTINUE and wandb_id:  # Resume run only if wandb_continue is True and a wandb_id exists
+        run = wandb.init(id=wandb_id,
+                         resume="Force",
+                         project=WANDB_PROJECT_NAME)
+    else:
+        wandb_id = wandb.util.generate_id()
+        run = wandb.init(project=WANDB_PROJECT_NAME,
+                         id=wandb_id,
+                         config={
+                             "learning_rate": LR,
+                             "episodes": EPISODES,
+                             "episode_length": EPISODE_LENGTH
+                         })
+    if run:
+        wandb_id = run.id
+        script_info += f'Wandb ID: {wandb_id}\n'  # Add the wandb_id to the script_info
+        with open(run_manager.script_info_path, 'w') as f:  # Write to the file again
+            f.write(script_info)
+
+
+for e in range(start_episode, EPISODES):
     print('Starting episode %d' % e)
     state, image = env.reset()
     states = []
@@ -425,11 +433,30 @@ for e in range(EPISODES):
             "Average Distance": average_distance,
             "Last Distance": last_distance
         })
-    np.save(os.path.join(episode_dir, 'states.npy'), states_history)
-    np.save(os.path.join(episode_dir, 'actions.npy'), actions_history)
+    save_info = {
+        'episode': e,
+        'model_state_dict': agent.policy.state_dict(),
+        'optimizer_state_dict': agent.optimizer.state_dict(),
+        'best_reward': run_manager.best_reward,
+        'other_data': {
+            'states': states,
+            'actions': actions,
+            'log_probs_old': log_probs_old,
+            'values': values,
+            'masks': masks,
+            'images': images,
+            'depth_images': depth_images
+        }
+    }
+    torch.save(save_info, os.path.join(episode_dir, 'model.pth'))
+    np.save(os.path.join(episode_dir, 'states.npy'), states)
+    np.save(os.path.join(episode_dir, 'actions.npy'), actions)
+    np.save(os.path.join(episode_dir, 'log_probs_old.npy'), log_probs_old)
+    np.save(os.path.join(episode_dir, 'values.npy'), values)
+    np.save(os.path.join(episode_dir, 'masks.npy'), masks)
     np.save(os.path.join(episode_dir, 'images.npy'), images)
     np.save(os.path.join(episode_dir, 'depth_images.npy'), depth_images)
-    np.save(os.path.join(episode_dir, 'rewards.npy'), rewards)
+    shutil.copy(os.path.join(run_manager.run_dir, 'script_info.txt'), episode_dir)
     best_episode_dir = run_manager.update_best_episode(episode_reward, e, episode_dir, agent)
     run_manager.maintain_last_episodes_memory(e)
 

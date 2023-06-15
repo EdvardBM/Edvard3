@@ -1,0 +1,3 @@
+Script: Reach_target_22_save_path.py
+Script Path: /home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Reach_target_22_save_path.py
+Wandb ID: evs45yjm
