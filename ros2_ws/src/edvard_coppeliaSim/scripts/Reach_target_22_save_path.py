@@ -22,18 +22,18 @@ from pathlib import Path
 SCENE_FILE = join(dirname(abspath(__file__)), 
                   '../../scenes/Kuka_Reach_target_constraints.ttt')
 
-EPISODES = 100
+EPISODES = 2000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
-SAVE_EVERY_X_EPISODE = 25
+SAVE_EVERY_X_EPISODE = 100
 LR = 1e-3
 
 USE_WANDB = True
-HEADLESS = True 
+HEADLESS = False 
 BASE_DIR = 'Test_22_save_path'
-RUN_NAME = 'Test_05'
+RUN_NAME = 'Test_06'
 LOAD_PREVIOUS_RUN = True
-PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_05/Episode_9/model.pth"
+PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_06/Episode_314/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = 'Test_resume_2'
@@ -179,13 +179,13 @@ class ReachEnv(object):
         'joint7': tuple(np.radians([-175.0, 175.0])),
     }
     
-    USE_LIMIT_PENALTY = False
+    USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -10.0
     
-    USE_INSIDE_TARGET_REWARD = False
+    USE_INSIDE_TARGET_REWARD = True
     TARGET_THRESHOLD = 0.05  
     INSIDE_TARGET_REWARD = 1.0
-    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.5 
+    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.1 
 
     DONE_ON_REWARD_THRESHOLD = False
     REWARD_THRESHOLD = -0.001
@@ -243,7 +243,7 @@ class Agent(object):
         log_prob = dist.log_prob(action)
         return action.numpy().squeeze(), value.item(), log_prob.item()
 
-    def learn(self, states, actions, log_probs_old, rewards, masks, values, images):  # Add images parameter
+    def learn(self, states, actions, log_probs_old, rewards, masks, values, images):  
     
         states = torch.tensor(np.array(states), dtype=torch.float32)
         images = torch.tensor(np.array(images), dtype=torch.float32)
@@ -353,7 +353,7 @@ if LOAD_PREVIOUS_RUN:
 else:
     start_episode = 0
     best_episode_dir = run_manager.run_dir / 'best_episode'
-    best_episode_dir.mkdir(parents=True, exist_ok=True)  # Create the directory
+    best_episode_dir.mkdir(parents=True, exist_ok=True) 
 
 
 script_info = f'Script: {__file__}\n'
@@ -366,14 +366,16 @@ if USE_WANDB:
     if WANDB_CONTINUE:
         wandb_id = run_manager.load_wandb_id()
 
-    if WANDB_CONTINUE and wandb_id:  # Resume run only if wandb_continue is True and a wandb_id exists
+    if WANDB_CONTINUE and wandb_id: 
         run = wandb.init(id=wandb_id,
                          resume="Force",
-                         project=WANDB_PROJECT_NAME)
+                         project=WANDB_PROJECT_NAME,
+                         save_code=True)
     else:
         wandb_id = wandb.util.generate_id()
         run = wandb.init(project=WANDB_PROJECT_NAME,
                          id=wandb_id,
+                         save_code=True,
                          config={
                              "learning_rate": LR,
                              "episodes": EPISODES,
@@ -381,8 +383,8 @@ if USE_WANDB:
                          })
     if run:
         wandb_id = run.id
-        script_info += f'Wandb ID: {wandb_id}\n'  # Add the wandb_id to the script_info
-        with open(run_manager.script_info_path, 'w') as f:  # Write to the file again
+        script_info += f'Wandb ID: {wandb_id}\n' 
+        with open(run_manager.script_info_path, 'w') as f:  
             f.write(script_info)
 
 

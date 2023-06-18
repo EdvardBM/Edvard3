@@ -74,6 +74,8 @@ CATKIN_IGNORE
 wandb/
 **/Reach_target_Recordings/
 **/wandb/run-*/logs/
+**Test_22_save_path
+
 
 *.pth
 *.npy
