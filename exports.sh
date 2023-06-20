@@ -35,6 +35,10 @@ export DISPLAY=:${DISP_NUM}.0
 echo $DISPLAY
 echo "Environment setup completed."
 
+# Use GPU
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/miniconda/lib/python3.10/site-packages/torch/lib
+
+
 
 #How to use:
 #chmod +x exports.sh
