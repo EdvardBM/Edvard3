@@ -33,7 +33,7 @@ HEADLESS = False
 BASE_DIR = 'Test_22_save_path'
 RUN_NAME = 'Test_06'
 LOAD_PREVIOUS_RUN = True
-PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_06/Episode_314/model.pth"
+PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_06/Episode_866/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = 'Test_resume_2'

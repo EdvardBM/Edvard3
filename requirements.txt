@@ -3,3 +3,4 @@ cffi==1.14.2
 wandb
 matplotlib
 moviepy
+requests
