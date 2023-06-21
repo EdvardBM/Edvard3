@@ -32,11 +32,11 @@ LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = False 
-BASE_DIR = 'test_continue'
+BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_10'
 LOAD_PREVIOUS_RUN = False
 EPISODE_NUM = 'Episode_314'
-#PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = BASE_DIR
