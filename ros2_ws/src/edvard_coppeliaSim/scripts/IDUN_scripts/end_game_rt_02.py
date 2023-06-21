@@ -199,7 +199,7 @@ class ReachEnv(object):
     TARGET_THRESHOLD = 0.01  
 
     USE_TIME_PENALTY = True  
-    TIME_PENALTY = -1.0 
+    TIME_PENALTY = -0.001
 
     USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -5
