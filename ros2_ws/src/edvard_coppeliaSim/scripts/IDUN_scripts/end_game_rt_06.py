@@ -28,7 +28,7 @@ EPISODES = 5000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
-LR = 1e-3
+LR = 5e-4
 
 USE_WANDB = True
 HEADLESS = False 
@@ -197,7 +197,7 @@ class ReachEnv(object):
     
     TARGET_THRESHOLD = 0.01  
 
-    USE_TIME_PENALTY = False  
+    USE_TIME_PENALTY = True  
     TIME_PENALTY = -1.0 
 
     USE_LIMIT_PENALTY = True

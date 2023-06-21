@@ -197,7 +197,7 @@ class ReachEnv(object):
     
     TARGET_THRESHOLD = 0.01  
 
-    USE_TIME_PENALTY = False  
+    USE_TIME_PENALTY = True  
     TIME_PENALTY = -1.0 
 
     USE_LIMIT_PENALTY = True
@@ -210,8 +210,8 @@ class ReachEnv(object):
     USE_DISTANCE_PENALTY = False   
     DISTANCE_PENALTY = -1.0      
 
-    DONE_ON_REWARD_THRESHOLD = False
-    REWARD_THRESHOLD = -0.001
+    DONE_ON_REWARD_THRESHOLD = True
+    REWARD_THRESHOLD = -0.01
 
     def step(self, action, e, best_episode):
         try:

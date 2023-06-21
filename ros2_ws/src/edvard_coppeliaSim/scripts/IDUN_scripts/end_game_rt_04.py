@@ -28,7 +28,7 @@ EPISODES = 5000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
-LR = 1e-3
+LR = 1e-4
 
 USE_WANDB = True
 HEADLESS = False 
@@ -195,15 +195,15 @@ class ReachEnv(object):
         'joint7': tuple(np.radians([-175.0, 175.0])),
     }
     
-    TARGET_THRESHOLD = 0.01  
+    TARGET_THRESHOLD = 0.01   
 
-    USE_TIME_PENALTY = False  
+    USE_TIME_PENALTY = True  
     TIME_PENALTY = -1.0 
 
     USE_LIMIT_PENALTY = True
-    LIMIT_PENALTY = -10.0
+    LIMIT_PENALTY = -5
     
-    USE_INSIDE_TARGET_REWARD = True
+    USE_INSIDE_TARGET_REWARD = False
     INSIDE_TARGET_REWARD = 1.0
     TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.2
 

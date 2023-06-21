@@ -258,7 +258,6 @@ class ReachEnv(object):
         self.pr.stop()
         self.pr.shutdown()
 
-
 class Agent(object):
     def __init__(self):
         self.policy = Policy(state_dim, action_dim, image_dim)
