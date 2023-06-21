@@ -141,9 +141,9 @@ class Policy(nn.Module):
     
         return dist, value
 
-
 class ReachEnv(object):
     def __init__(self):
+
         self.pr = PyRep()
         self.pr.launch(SCENE_FILE, headless=HEADLESS)
         self.agent = LBRIwaa14R820()
@@ -154,6 +154,7 @@ class ReachEnv(object):
         self.agent_ee_tip = self.agent.get_tip()
         self.initial_joint_positions = self.agent.get_joint_positions()
         self.time_inside_target = 0.0
+        self.time_outside_target = 0.0
 
     WAYPOINT_POS_MIN, WAYPOINT_POS_MAX = [-1.7500e+00, +1.2500e-01, +7.0200e-01], [-1.2750e+00, +8.5000e-01, +7.0200e-01]
     
@@ -177,7 +178,7 @@ class ReachEnv(object):
         self.waypoint = Shape('Waypoint')
         self.vision_sensor = VisionSensor('Vision_sensor')
         self.agent_ee_tip = self.agent.get_tip()
-
+        self.time_outside_target = 0.0
         pos = list(np.random.uniform(self.WAYPOINT_POS_MIN, self.WAYPOINT_POS_MAX))
         self.waypoint.set_position(pos)
 
@@ -194,13 +195,17 @@ class ReachEnv(object):
         'joint7': tuple(np.radians([-175.0, 175.0])),
     }
     
+    TARGET_THRESHOLD = 0.01  
+
+    USE_TIME_PENALTY = False  
+    TIME_PENALTY = -1.0 
+
     USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -10.0
     
     USE_INSIDE_TARGET_REWARD = True
-    TARGET_THRESHOLD = 0.01  
     INSIDE_TARGET_REWARD = 1.0
-    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.1 
+    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.2
 
     USE_DISTANCE_PENALTY = False   
     DISTANCE_PENALTY = -1.0      
@@ -215,13 +220,16 @@ class ReachEnv(object):
             self.vision_sensor.handle_explicitly()
             ax, ay, az = self.agent_ee_tip.get_position()
             wx, wy, wz = self.waypoint.get_position()
+            distance_to_target = np.linalg.norm(self.agent_ee_tip.get_position() - self.waypoint.get_position())
 
             reward = 0
 
+            if self.USE_TIME_PENALTY and distance_to_target > self.TARGET_THRESHOLD:
+                self.time_outside_target += 1
+                reward += self.TIME_PENALTY * self.time_outside_target
+
             if self.USE_DISTANCE_PENALTY:
                 reward += self.DISTANCE_PENALTY * np.linalg.norm(np.array([ax, ay, az]) - np.array([wx, wy, wz]))
-
-            distance_to_target = np.linalg.norm(self.agent_ee_tip.get_position() - self.waypoint.get_position())
 
             if self.USE_INSIDE_TARGET_REWARD:
                 if distance_to_target < self.TARGET_THRESHOLD:
@@ -249,6 +257,7 @@ class ReachEnv(object):
     def shutdown(self):
         self.pr.stop()
         self.pr.shutdown()
+
 
 class Agent(object):
     def __init__(self):

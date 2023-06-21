@@ -39,7 +39,6 @@ echo "Environment setup completed."
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/miniconda/lib/python3.10/site-packages/torch/lib
 
 
-
 #How to use:
 #chmod +x exports.sh
 #source exports.sh
