@@ -20,7 +20,7 @@ import shutil
 from pathlib import Path
 
 SCENE_FILE = join(dirname(abspath(__file__)), 
-                  '../../scenes/Kuka_Reach_target_constraints.ttt')
+                  '../../../scenes/Kuka_Reach_target_constraints.ttt')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,9 +34,9 @@ USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_08'
-LOAD_PREVIOUS_RUN = False
-EPISODE_NUM = 'Episode_314'
-PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+LOAD_PREVIOUS_RUN = True
+EPISODE_NUM = 'Episode_560'
+PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = BASE_DIR

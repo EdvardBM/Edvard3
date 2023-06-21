@@ -20,11 +20,11 @@ import shutil
 from pathlib import Path
 
 SCENE_FILE = join(dirname(abspath(__file__)), 
-                  '../../scenes/Kuka_Reach_target_constraints.ttt')
+                  '../../../scenes/Kuka_Reach_target_constraints.ttt')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES = 5
+EPISODES = 5000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
@@ -34,9 +34,9 @@ USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_09'
-LOAD_PREVIOUS_RUN = False
-EPISODE_NUM = 'Episode_314'
-PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+LOAD_PREVIOUS_RUN = True
+EPISODE_NUM = 'Episode_279'
+PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = BASE_DIR
@@ -348,9 +348,16 @@ class RunManager:
                     shutil.rmtree(episode_dirs[0], ignore_errors=True)
                 episode_dirs.pop(0)
 
-    def load_wandb_id(self):
-        if self.script_info_path.exists():
-            with open(self.script_info_path, 'r') as f:
+    def load_wandb_id(self, previous_run_path=None):
+        if previous_run_path:
+            # If previous_run_path is provided, construct the path to script_info.txt
+            script_info_path = os.path.join(os.path.dirname(previous_run_path), 'script_info.txt')
+        else:
+            # If previous_run_path is not provided, use the default script_info_path
+            script_info_path = self.script_info_path
+
+        if os.path.exists(script_info_path):
+            with open(script_info_path, 'r') as f:
                 for line in f:
                     if 'Wandb ID' in line:
                         return line.split(': ')[-1].strip()
@@ -386,7 +393,6 @@ else:
     start_episode = 0
     best_episode_dir = run_manager.run_dir / 'best_episode'
     best_episode_dir.mkdir(parents=True, exist_ok=True) 
-
 
 script_info = f'Script: {__file__}\n'
 script_info += f'Script Path: {os.path.abspath(__file__)}\n'

@@ -36,7 +36,7 @@ BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_10'
 LOAD_PREVIOUS_RUN = False
 EPISODE_NUM = 'Episode_314'
-PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = BASE_DIR
@@ -86,6 +86,10 @@ class PPO:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+
+                # If you plan to use any of the outputs outside of the GPU, move them back to CPU
+                if USE_WANDB:
+                    wandb.log({"Actor Loss": actor_loss.item(), "Critic Loss": critic_loss.item(), "Total Loss": loss.item()})
 
 class Policy(nn.Module):
     def __init__(self, state_dim, action_dim, image_dim):
@@ -359,7 +363,6 @@ class RunManager:
                         return line.split(': ')[-1].strip()
         return None
 
-
 env = ReachEnv()
 agent = Agent()
 run_manager = RunManager(base_dir=BASE_DIR, run_name=RUN_NAME)
@@ -424,6 +427,8 @@ if USE_WANDB:
         script_info += f'Wandb ID: {wandb_id}\n' 
         with open(run_manager.script_info_path, 'w') as f:  
             f.write(script_info)
+
+            
 for e in range(start_episode, EPISODES):
     print('Starting episode %d' % e)
     state, image = env.reset()
