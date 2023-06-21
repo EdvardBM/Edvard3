@@ -30,7 +30,7 @@ LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
 LR = 1e-3
 
-USE_WANDB = True
+USE_WANDB = False
 HEADLESS = False 
 BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_02'
@@ -86,10 +86,6 @@ class PPO:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-
-                # If you plan to use any of the outputs outside of the GPU, move them back to CPU
-                if USE_WANDB:
-                    wandb.log({"Actor Loss": actor_loss.item(), "Critic Loss": critic_loss.item(), "Total Loss": loss.item()})
 
 class Policy(nn.Module):
     def __init__(self, state_dim, action_dim, image_dim):
@@ -197,13 +193,13 @@ class ReachEnv(object):
     
     TARGET_THRESHOLD = 0.01  
 
-    USE_TIME_PENALTY = False  
+    USE_TIME_PENALTY = True 
     TIME_PENALTY = -1.0 
 
-    USE_LIMIT_PENALTY = True
+    USE_LIMIT_PENALTY = False
     LIMIT_PENALTY = -10.0
     
-    USE_INSIDE_TARGET_REWARD = True
+    USE_INSIDE_TARGET_REWARD = False
     INSIDE_TARGET_REWARD = 1.0
     TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.2
 
@@ -226,7 +222,7 @@ class ReachEnv(object):
 
             if self.USE_TIME_PENALTY and distance_to_target > self.TARGET_THRESHOLD:
                 self.time_outside_target += 1
-                reward += self.TIME_PENALTY * self.time_outside_target
+                reward += self.TIME_PENALTY
 
             if self.USE_DISTANCE_PENALTY:
                 reward += self.DISTANCE_PENALTY * np.linalg.norm(np.array([ax, ay, az]) - np.array([wx, wy, wz]))

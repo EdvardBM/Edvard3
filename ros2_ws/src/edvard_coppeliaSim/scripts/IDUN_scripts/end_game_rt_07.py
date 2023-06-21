@@ -226,7 +226,7 @@ class ReachEnv(object):
 
             if self.USE_TIME_PENALTY and distance_to_target > self.TARGET_THRESHOLD:
                 self.time_outside_target += 1
-                reward += self.TIME_PENALTY * self.time_outside_target
+                reward += self.TIME_PENALTY
 
             if self.USE_DISTANCE_PENALTY:
                 reward += self.DISTANCE_PENALTY * np.linalg.norm(np.array([ax, ay, az]) - np.array([wx, wy, wz]))

@@ -20,20 +20,20 @@ import shutil
 from pathlib import Path
 
 SCENE_FILE = join(dirname(abspath(__file__)), 
-                  '../../../scenes/Kuka_Reach_target_constraints.ttt')
+                  '../../scenes/Kuka_Reach_target_constraints.ttt')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES = 5000
+EPISODES = 5
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
-LR = 5e-4
+LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'End_game'
-RUN_NAME = 'Run_GPU_06'
+RUN_NAME = 'Run_GPU_02'
 LOAD_PREVIOUS_RUN = False
 EPISODE_NUM = 'Episode_314'
 PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
@@ -197,13 +197,13 @@ class ReachEnv(object):
     
     TARGET_THRESHOLD = 0.01  
 
-    USE_TIME_PENALTY = False  
+    USE_TIME_PENALTY = True  
     TIME_PENALTY = -1.0 
 
     USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -10.0
     
-    USE_INSIDE_TARGET_REWARD = True
+    USE_INSIDE_TARGET_REWARD = False
     INSIDE_TARGET_REWARD = 1.0
     TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.2
 
@@ -226,7 +226,7 @@ class ReachEnv(object):
 
             if self.USE_TIME_PENALTY and distance_to_target > self.TARGET_THRESHOLD:
                 self.time_outside_target += 1
-                reward += self.TIME_PENALTY * self.time_outside_target
+                reward += self.TIME_PENALTY
 
             if self.USE_DISTANCE_PENALTY:
                 reward += self.DISTANCE_PENALTY * np.linalg.norm(np.array([ax, ay, az]) - np.array([wx, wy, wz]))
