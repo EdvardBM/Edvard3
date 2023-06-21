@@ -24,19 +24,20 @@ SCENE_FILE = join(dirname(abspath(__file__)),
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES = 5
+EPISODES = 28
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 2
 SAVE_EVERY_X_EPISODE = 100
 LR = 1e-3
 
-USE_WANDB = False
-HEADLESS = False 
-BASE_DIR = 'End_game'
+USE_WANDB = True
+HEADLESS = True 
+BASE_DIR = 'test_continue'
 RUN_NAME = 'Run_GPU_02'
-LOAD_PREVIOUS_RUN = False
+LOAD_PREVIOUS_RUN = True
 EPISODE_NUM = 'Episode_314'
-PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+#PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
+PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/test_continue/Run_GPU_02/Episode_27/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = BASE_DIR
@@ -344,13 +345,21 @@ class RunManager:
                     shutil.rmtree(episode_dirs[0], ignore_errors=True)
                 episode_dirs.pop(0)
 
-    def load_wandb_id(self):
-        if self.script_info_path.exists():
-            with open(self.script_info_path, 'r') as f:
+    def load_wandb_id(self, previous_run_path=None):
+        if previous_run_path:
+            # If previous_run_path is provided, construct the path to script_info.txt
+            script_info_path = os.path.join(os.path.dirname(previous_run_path), 'script_info.txt')
+        else:
+            # If previous_run_path is not provided, use the default script_info_path
+            script_info_path = self.script_info_path
+
+        if os.path.exists(script_info_path):
+            with open(script_info_path, 'r') as f:
                 for line in f:
                     if 'Wandb ID' in line:
                         return line.split(': ')[-1].strip()
         return None
+
 
 env = ReachEnv()
 agent = Agent()
@@ -383,7 +392,6 @@ else:
     best_episode_dir = run_manager.run_dir / 'best_episode'
     best_episode_dir.mkdir(parents=True, exist_ok=True) 
 
-
 script_info = f'Script: {__file__}\n'
 script_info += f'Script Path: {os.path.abspath(__file__)}\n'
 script_info_path = run_manager.run_dir / 'script_info.txt'
@@ -395,7 +403,7 @@ if USE_WANDB:
     wandb.login()
 
     if WANDB_CONTINUE:
-        wandb_id = run_manager.load_wandb_id()
+        wandb_id = run_manager.load_wandb_id(PREVIOUS_RUN_PATH)
 
     if WANDB_CONTINUE and wandb_id: 
         run = wandb.init(id=wandb_id,
@@ -417,8 +425,6 @@ if USE_WANDB:
         script_info += f'Wandb ID: {wandb_id}\n' 
         with open(run_manager.script_info_path, 'w') as f:  
             f.write(script_info)
-
-
 for e in range(start_episode, EPISODES):
     print('Starting episode %d' % e)
     state, image = env.reset()
@@ -496,10 +502,11 @@ for e in range(start_episode, EPISODES):
 BASE_DIR = Path(BASE_DIR)
 RUN_NAME = Path(RUN_NAME)
 BEST_EPISODE_DIR = Path(best_episode_dir)
-
+'''
 make_video_command = join(dirname(abspath(__file__)), 'commands', 'make_video.py')
 subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/images.npy'])
 subprocess.run([make_video_command, f'{BEST_EPISODE_DIR}/depth_images.npy'])
+'''
 print('Done!')
 env.shutdown()
 

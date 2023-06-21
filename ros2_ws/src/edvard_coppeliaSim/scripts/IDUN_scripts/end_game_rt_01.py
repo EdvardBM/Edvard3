@@ -34,8 +34,8 @@ USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_01'
-LOAD_PREVIOUS_RUN = False
-EPISODE_NUM = 'Episode_314'
+LOAD_PREVIOUS_RUN = True
+EPISODE_NUM = 'Episode_182'
 PREVIOUS_RUN_PATH = f"/root/End_game/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
@@ -344,9 +344,14 @@ class RunManager:
                     shutil.rmtree(episode_dirs[0], ignore_errors=True)
                 episode_dirs.pop(0)
 
-    def load_wandb_id(self):
-        if self.script_info_path.exists():
-            with open(self.script_info_path, 'r') as f:
+    def load_wandb_id(self, previous_run_path=None):
+        if previous_run_path:
+            script_info_path = os.path.join(os.path.dirname(previous_run_path), 'script_info.txt')
+        else:
+            script_info_path = self.script_info_path
+
+        if os.path.exists(script_info_path):
+            with open(script_info_path, 'r') as f:
                 for line in f:
                     if 'Wandb ID' in line:
                         return line.split(': ')[-1].strip()
@@ -395,7 +400,7 @@ if USE_WANDB:
     wandb.login()
 
     if WANDB_CONTINUE:
-        wandb_id = run_manager.load_wandb_id()
+        wandb_id = run_manager.load_wandb_id(PREVIOUS_RUN_PATH)
 
     if WANDB_CONTINUE and wandb_id: 
         run = wandb.init(id=wandb_id,

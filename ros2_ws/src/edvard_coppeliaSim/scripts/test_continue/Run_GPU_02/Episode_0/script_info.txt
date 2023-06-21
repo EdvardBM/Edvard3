@@ -1,0 +1,3 @@
+Script: Reach_target_25_GPU_time_reward.py
+Script Path: /home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Reach_target_25_GPU_time_reward.py
+Wandb ID: e9pp2u9a

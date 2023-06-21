@@ -32,8 +32,8 @@ USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'Test_New_reward'
 RUN_NAME = 'Test'
-LOAD_PREVIOUS_RUN = False
-PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/Test_22_save_path/Test_06/Episode_314/model.pth"
+LOAD_PREVIOUS_RUN = True
+PREVIOUS_RUN_PATH = "/home/h/Edvard3/ros2_ws/src/edvard_coppeliaSim/scripts/End_game/Run_GPU_02/Episode_4/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
 WANDB_PROJECT_NAME = 'Test_reward'
