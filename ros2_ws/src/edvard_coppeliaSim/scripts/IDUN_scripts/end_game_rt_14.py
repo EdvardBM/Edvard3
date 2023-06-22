@@ -26,16 +26,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 EPISODES = 20000
 EPISODE_LENGTH = 200
-LAST_EPISODES_MEMORY = 2
-SAVE_EVERY_X_EPISODE = 250
+LAST_EPISODES_MEMORY = 3
+SAVE_EVERY_X_EPISODE = 100
 LR = 1e-3
 
 USE_WANDB = True
 HEADLESS = False 
 BASE_DIR = 'End_game'
-RUN_NAME = 'Run_GPU_12'
-LOAD_PREVIOUS_RUN = True
-EPISODE_NUM = 'Episode_1379'
+RUN_NAME = 'Run_GPU_14'
+LOAD_PREVIOUS_RUN = False
+EPISODE_NUM = 'Episode_3874'
 PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
@@ -156,7 +156,7 @@ class ReachEnv(object):
         self.time_inside_target = 0.0
         self.time_outside_target = 0.0
 
-    WAYPOINT_POS_MIN, WAYPOINT_POS_MAX = [-1.500e+00, +4.500e-01, +7.500e-01], [-1.50e+00, +4.5000e-01, +7.500e-01]
+    WAYPOINT_POS_MIN, WAYPOINT_POS_MAX = [-1.7500e+00, +1.2500e-01, +7.0200e-01], [-1.2750e+00, +8.5000e-01, +7.0200e-01]
     
     def _get_state(self):
         image_rgb = self.vision_sensor.capture_rgb()
@@ -197,15 +197,15 @@ class ReachEnv(object):
     
     TARGET_THRESHOLD = 0.01  
 
-    USE_TIME_PENALTY = True 
+    USE_TIME_PENALTY = False 
     TIME_PENALTY = -1.0 
 
     USE_LIMIT_PENALTY = True
     LIMIT_PENALTY = -10.0
     
     USE_INSIDE_TARGET_REWARD = True
-    INSIDE_TARGET_REWARD = 1.0
-    TIME_INSIDE_TARGET_REWARD_INCREMENT = 0.2
+    INSIDE_TARGET_REWARD = 5.0
+    TIME_INSIDE_TARGET_REWARD_INCREMENT = 1
 
     USE_DISTANCE_PENALTY = True   
     DISTANCE_PENALTY = -1.0      
