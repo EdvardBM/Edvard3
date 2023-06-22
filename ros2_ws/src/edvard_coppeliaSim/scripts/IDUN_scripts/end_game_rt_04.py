@@ -24,7 +24,7 @@ SCENE_FILE = join(dirname(abspath(__file__)),
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-EPISODES = 5000
+EPISODES = 20000
 EPISODE_LENGTH = 200
 LAST_EPISODES_MEMORY = 4
 SAVE_EVERY_X_EPISODE = 100
@@ -35,7 +35,7 @@ HEADLESS = False
 BASE_DIR = 'End_game'
 RUN_NAME = 'Run_GPU_04'
 LOAD_PREVIOUS_RUN = True
-EPISODE_NUM = 'Episode_1994'
+EPISODE_NUM = 'Episode_3157'
 PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 

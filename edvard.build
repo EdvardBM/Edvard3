@@ -23,7 +23,7 @@ From: nvidia/cuda:11.7.0-cudnn8-devel-ubuntu20.04
     ln -sf /usr/bin/clang-13 /usr/bin/clang
     ln -sf /usr/bin/clang++-13 /usr/bin/clang++
 
-    # Create directory and symbolic link for swrast_dri.so
+    # Create directory and symbolic link for swrast_dri.so in hope that Headless = True will work
     mkdir -p /usr/lib/dri
     ln -sf /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so /usr/lib/dri/swrast_dri.so
 

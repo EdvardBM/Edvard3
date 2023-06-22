@@ -1,0 +1,27 @@
+.
+├── ros2_ws
+│   └── src
+│       ├── edvard_coppeliaSim
+│       │   ├── launch
+│       │   └── scripts
+│       │       ├── commands
+│       │       ├── End_game
+│       │       ├── IDUN_scripts
+│       │       ├── old_scripts
+│       ├── edvard_interfaces
+│       ├── edvard_rviz2
+│       │   ├── config
+│       │   ├── launch
+│       │   ├── meshes
+│       │   │   └── lbr_iiwa_14_r820
+│       │   │       ├── collision
+│       │   │       └── visual
+│       │   ├── rviz
+│       │   ├── scripts
+│       │   └── urdf
+│       ├── scenes
+│       ├── sim_ros2_interface
+│       └── sunrisedds
+│           ├── sunrisedds_interfaces
+└── tests
+
