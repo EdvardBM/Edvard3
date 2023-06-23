@@ -38,7 +38,7 @@ HEADLESS = False # Flag for not GUI
 BASE_DIR = 'End_game' # The directory in which the runs are saved
 RUN_NAME = 'Run_GPU_14'
 LOAD_PREVIOUS_RUN = True # Wether or not to load a previous run
-EPISODE_NUM = 'Episode_2310' # Which episode to load
+EPISODE_NUM = 'Episode_2767' # Which episode to load
 PREVIOUS_RUN_PATH = f"/root/{BASE_DIR}/{RUN_NAME}/{EPISODE_NUM}/model.pth"
 
 WANDB_CONTINUE = LOAD_PREVIOUS_RUN 
