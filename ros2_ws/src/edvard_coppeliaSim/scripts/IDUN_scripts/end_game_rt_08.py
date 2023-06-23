@@ -399,7 +399,7 @@ if USE_WANDB:
     wandb.login()
 
     if WANDB_CONTINUE:
-        wandb_id = run_manager.load_wandb_id()
+        wandb_id = run_manager.load_wandb_id(PREVIOUS_RUN_PATH)
 
     if WANDB_CONTINUE and wandb_id: 
         run = wandb.init(id=wandb_id,
